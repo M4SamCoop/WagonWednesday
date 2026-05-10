@@ -1,0 +1,20 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+	<style>
+		.s0 { fill: #000000;stroke: #000000;stroke-linecap: round;stroke-linejoin: round;stroke-width: 33 } 
+		.s1 { fill: none;stroke: #000000;stroke-linecap: round;stroke-linejoin: round;stroke-width: 18 } 
+		.s2 { fill: #000000 } 
+	</style>
+	<path id="Color Fill 1" class="s0" d="m109.5 233.85l795 12 130.5 130.5 501 24 1.5 94.5 21 27-4.5 88.5-147 13.5-43.5-133.5-162-1.5-46.5 127.5h-474l-183-10.5-34.5-117-175.5-9-46.5 126-184.5-31.5-16-84.35 33-1 65.5-196.65z"/>
+	<path id="Layer 2" fill-rule="evenodd" class="s1" d="m747 417l65 3"/>
+	<path id="Layer 4" fill-rule="evenodd" class="s1" d="m452 406l67 3.35"/>
+	<path id="Layer 5" fill-rule="evenodd" class="s1" d="m105 494.85l172.5 6"/>
+	<path id="Layer 6" fill-rule="evenodd" class="s1" d="m507 500.85l675 21"/>
+	<path id="Layer 7" fill-rule="evenodd" class="s1" d="m1405.5 527.85l153.5 0.15"/>
+	<path id="Layer 8" class="s1" d="m753 376.35l253.5 15-112.5-109.5-163.5-4.5z"/>
+	<path id="Layer 9" class="s1" d="m468 370l239 8-21.5-100.65-193.5-3z"/>
+	<path id="Layer 10" class="s1" d="m423 364.35l28.5-90-259.5-6-30 93z"/>
+	<path id="Layer 11" fill-rule="evenodd" class="s1" d="m1482 411l8 70 45 2"/>
+	<path id="Layer 12" fill-rule="evenodd" class="s1" d="m99 450h36l24-63h-40"/>
+	<path id="Layer 13" fill-rule="evenodd" class="s2" d="m370 695c-50.88 0-92-41.12-92-92 0-50.88 41.12-92 92-92 50.88 0 92 41.12 92 92 0 50.88-41.12 92-92 92z"/>
+	<path id="Layer 14" fill-rule="evenodd" class="s2" d="m1282.24 698.53c-50.33 0.05-91.04-40.59-91.09-90.91-0.05-50.33 40.59-91.04 90.91-91.09 50.32-0.05 91.04 40.59 91.09 90.91 0.05 50.32-40.59 91.04-90.91 91.09z"/>
+</svg>

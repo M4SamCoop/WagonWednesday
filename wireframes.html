@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Portfolio · Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  :root{
+    --paper:#f5f2ea;
+    --ink:#171513;
+    --ink-2:#3a3633;
+    --ink-3:#7a736b;
+    --rule:#1a1a1a;
+    --accent:oklch(0.65 0.18 35);
+    --accent-soft:oklch(0.65 0.18 35 / 0.18);
+  }
+  html,body{background:#e8e4dc;margin:0;font-family:'Inter',sans-serif;color:var(--ink);}
+  /* wireframe primitives */
+  .wf{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);width:100%;height:100%;overflow:hidden;position:relative}
+  .ink{stroke:var(--ink);}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .hand{font-family:'Kalam',cursive;}
+  .note{font-family:'Kalam',cursive;color:var(--accent);font-weight:400;}
+  .stripes{
+    background-image:repeating-linear-gradient(135deg,
+      rgba(20,20,20,.10) 0 1px,
+      transparent 1px 9px);
+  }
+  .stripes-thin{
+    background-image:repeating-linear-gradient(135deg,
+      rgba(20,20,20,.07) 0 1px,
+      transparent 1px 7px);
+  }
+  .stripes-dense{
+    background-image:repeating-linear-gradient(135deg,
+      rgba(20,20,20,.14) 0 1px,
+      transparent 1px 6px);
+  }
+  .box{border:1.5px solid var(--ink);background:transparent;}
+  .box-soft{border:1.25px solid var(--ink-2);}
+  .box-dashed{border:1.5px dashed var(--ink);}
+  .placeholder{position:relative;}
+  .placeholder::after{
+    content:attr(data-ph);
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.04em;
+    color:var(--ink-2);text-transform:uppercase;
+    text-align:center;padding:8px;
+    text-shadow:0 0 6px var(--paper),0 0 6px var(--paper);
+  }
+  .annotation-line{position:absolute;pointer-events:none;}
+  .annotation-line svg{overflow:visible;}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border:1.25px solid var(--ink);border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;}
+  .chip{display:inline-block;padding:2px 7px;border:1px solid var(--ink-2);border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-2);}
+  .dot{width:6px;height:6px;border-radius:999px;background:var(--ink);display:inline-block;}
+  .arrow-r::after{content:"→";margin-left:6px;}
+  .ascii{font-family:'JetBrains Mono',monospace;white-space:pre;line-height:1.05;}
+  .crosshatch{
+    background-image:
+      repeating-linear-gradient(45deg, rgba(0,0,0,.10) 0 1px, transparent 1px 7px),
+      repeating-linear-gradient(-45deg, rgba(0,0,0,.10) 0 1px, transparent 1px 7px);
+  }
+
+  /* Squiggle underlines via SVG bg */
+  .squiggle{
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 6'><path d='M0 3 Q 10 0 20 3 T 40 3 T 60 3 T 80 3' fill='none' stroke='%23c25a30' stroke-width='1.6'/></svg>");
+    background-repeat:repeat-x;background-position:0 100%;background-size:80px 6px;
+    padding-bottom:6px;
+  }
+
+  /* tiny scrollbar hide for canvas */
+  *::-webkit-scrollbar{display:none}
+  *{scrollbar-width:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="wireframes.jsx"></script>
+</body>
+</html>
