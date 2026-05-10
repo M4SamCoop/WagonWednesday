@@ -6,6 +6,7 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 const FEATURED = [
   { id: 'ww',  t: 'Wagon Wednesday',  s: 'a tiny weekly ritual app',         k: 'react · idb',   yr: '2026', tone: 'img' },
+  { id: 'qwc', t: "Quizzy's Word Challenge", s: 'build words from a letter grid', k: 'vanilla js · pwa', yr: '2026', tone: 'hatch', url: 'quizzy/' },
   { id: 'lap', t: 'Lap Counter',      s: 'pwa for swim sets, no signup',     k: 'svelte · pwa',  yr: '2026', tone: 'hatch' },
   { id: 'tp',  t: 'Tone Picker',      s: 'pick a chord, paint with it',      k: 'canvas · audio',yr: '2025', tone: 'img' },
   { id: 'prpg',t: 'Pomodoro RPG',     s: 'level up by focusing',             k: 'svelte',        yr: '2025', tone: 'img' },
@@ -13,6 +14,7 @@ const FEATURED = [
 ];
 
 const ALL = [
+  { h: 180, type: 'hatch', t: "Quizzy's Word Challenge", tag: 'word game · js · 2026', url: 'quizzy/' },
   { h: 220, type: 'img',   t: 'Lap Counter',      tag: 'react · pwa · 2026' },
   { h: 130, type: 'text',  t: 'Tide Clock',       tag: 'a clock face = your local tide' },
   { h: 260, type: 'img',   t: 'Tone Picker',      tag: 'canvas · audio · 2025' },
@@ -544,8 +546,12 @@ const useLoader = () => {
       if (v >= 1) {
         setProgress(1);
         setTimeout(() => {
-          setActive(false);
-          setProgress(0);
+          if (p.url) {
+            window.location.href = p.url;
+          } else {
+            setActive(false);
+            setProgress(0);
+          }
         }, 480);
         return;
       }

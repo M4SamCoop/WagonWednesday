@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#FF44BB">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Quizzy">
+  <title>Quizzy's Word Challenge</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Loading ─────────────────────────────────────────────────────── -->
+  <div id="sc-loading" class="screen active">
+    <div class="loading-inner">
+      <div class="retro-logo">
+        <span class="rl-quizzys">Quizzy's</span>
+        <span class="rl-word">WORD</span>
+        <span class="rl-challenge">CHALLENGE!</span>
+      </div>
+      <div class="loading-bar"><div class="loading-fill" id="load-fill"></div></div>
+      <p id="loading-text">Loading dictionary…</p>
+    </div>
+  </div>
+
+  <!-- ── Menu ────────────────────────────────────────────────────────── -->
+  <div id="sc-menu" class="screen">
+    <div class="menu-inner">
+      <div class="retro-logo">
+        <span class="rl-quizzys">Quizzy's</span>
+        <span class="rl-word">WORD</span>
+        <span class="rl-challenge">CHALLENGE!</span>
+      </div>
+      <p class="menu-sub">Build words from the letter grid!</p>
+      <button class="btn btn-primary" id="btn-play">Play!</button>
+      <button class="btn btn-ghost"   id="btn-howto">How to Play</button>
+      <p id="best-score"></p>
+    </div>
+  </div>
+
+  <!-- ── How to Play ──────────────────────────────────────────────────── -->
+  <div id="sc-howto" class="screen">
+    <div class="howto-inner">
+      <h2>How to Play</h2>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">🔵</span><span>Start with <strong>outer ring</strong> letters (lightest tiles)</span></div>
+        <div class="rule"><span class="rule-icon">🟣</span><span>Move <strong>inward</strong> — middle tiles are darker and worth more</span></div>
+        <div class="rule"><span class="rule-icon">⭐</span><span>End on the <strong>center tile</strong> for a 3× point bonus!</span></div>
+        <div class="rule"><span class="rule-icon">➡️</span><span>You can't go back <strong>outward</strong> once you move inward</span></div>
+        <div class="rule"><span class="rule-icon">🔄</span><span>Used letters are <strong>replaced</strong> with new random ones</span></div>
+        <div class="rule"><span class="rule-icon">📚</span><span>Your found words are logged in the <strong>book</strong> on the left</span></div>
+        <div class="rule"><span class="rule-icon">⌨️</span><span><kbd>Enter</kbd> submit &nbsp;·&nbsp; <kbd>Esc</kbd> clear &nbsp;·&nbsp; <kbd>⌫</kbd> undo last</span></div>
+      </div>
+      <button class="btn btn-primary" id="btn-howto-back">Got it!</button>
+    </div>
+  </div>
+
+  <!-- ── Game ─────────────────────────────────────────────────────────── -->
+  <div id="sc-game" class="screen">
+    <div class="game-frame">
+
+      <!-- Top bar -->
+      <div class="game-topbar">
+        <div class="topbar-logo">
+          <span class="rl-quizzys">Quizzy's</span>
+          <span class="rl-word">WORD</span>
+          <span class="rl-challenge">CHALLENGE!</span>
+        </div>
+        <div class="game-stats">
+          <span class="stat-item show-mobile">SCORE <strong id="hdr-score">0</strong></span>
+          <span class="stat-item">GOAL: <strong id="hdr-target">100</strong></span>
+          <span class="stat-item">LEVEL <strong id="hdr-lvl">1</strong></span>
+          <span class="stat-item">WORDS <strong id="hdr-words">0</strong></span>
+          <button class="btn-icon-sm" id="btn-hdr-menu" title="Menu">✕</button>
+        </div>
+      </div>
+
+      <!-- Main body: left panel + grid -->
+      <div class="game-body">
+
+        <!-- Left panel: WORDS book -->
+        <div class="left-panel">
+          <div class="words-header">
+            <span class="words-tab">WORDS</span>
+            <span class="bonus-label">Bonus Word</span>
+            <span class="bonus-arrow">▶</span>
+            <span class="bonus-word-chip" id="bonus-word">???</span>
+          </div>
+
+          <div class="book-wrap">
+            <div class="book">
+              <div class="book-page" id="book-left"></div>
+              <div class="book-spine"></div>
+              <div class="book-page" id="book-right"></div>
+            </div>
+          </div>
+
+          <div class="bear-area">
+            <div class="bear-badge" id="btn-hint" title="Hint">🐻</div>
+            <div class="hint-text">Click me for<br>a Hint!</div>
+          </div>
+        </div>
+
+        <!-- Right panel: grid -->
+        <div class="right-panel">
+          <div class="grid" id="grid"></div>
+          <div class="msg-area" id="msg"></div>
+        </div>
+
+      </div><!-- /game-body -->
+
+      <!-- Bottom bar -->
+      <div class="game-bottombar">
+        <button class="btn-game btn-teal-game" id="btn-shuffle">SHUFFLE</button>
+        <button class="btn-game btn-teal-game" id="btn-clear">CLEAR</button>
+        <div class="word-display-bar" id="word-display-bar">
+          <span class="bar-placeholder">Tap letters to form a word</span>
+        </div>
+        <button class="btn-game btn-green-game" id="btn-submit" disabled>SUBMIT</button>
+      </div>
+
+    </div><!-- /game-frame -->
+  </div><!-- /sc-game -->
+
+  <!-- ── Level Complete ────────────────────────────────────────────────── -->
+  <div id="sc-levelComplete" class="screen">
+    <div class="overlay-inner">
+      <div class="overlay-icon">🎉</div>
+      <div class="overlay-title">Level Complete!</div>
+      <p class="overlay-sub" id="lc-pts"></p>
+      <p class="overlay-sub" id="lc-words"></p>
+      <button class="btn btn-primary" id="btn-next-level">Next Level →</button>
+    </div>
+  </div>
+
+  <!-- ── Game Over ────────────────────────────────────────────────────── -->
+  <div id="sc-gameOver" class="screen">
+    <div class="overlay-inner">
+      <div class="overlay-icon">😢</div>
+      <div class="overlay-title">Game Over</div>
+      <p class="overlay-sub" id="go-reason"></p>
+      <button class="btn btn-primary" id="btn-play-again">Play Again</button>
+      <button class="btn btn-ghost"   id="btn-go-menu">Menu</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+<script src="game.js"></script>
+</body>
+</html>
