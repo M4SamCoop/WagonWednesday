@@ -75,8 +75,10 @@
           <span class="stat-item">GOAL: <strong id="hdr-target">100</strong></span>
           <span class="stat-item">LEVEL <strong id="hdr-lvl">1</strong></span>
           <span class="stat-item">WORDS <strong id="hdr-words">0</strong></span>
-          <button class="btn-icon-sm" id="btn-hdr-menu" title="Menu">✕</button>
         </div>
+        <button class="btn-hamburger" id="btn-hdr-menu" title="Options" aria-label="Options">
+          <span></span><span></span><span></span>
+        </button>
       </div>
 
       <!-- Main body: left panel + grid -->
@@ -145,6 +147,33 @@
       <p class="overlay-sub" id="go-reason"></p>
       <button class="btn btn-primary" id="btn-play-again">Play Again</button>
       <button class="btn btn-ghost"   id="btn-go-menu">Menu</button>
+    </div>
+  </div>
+
+  <!-- ── Options menu overlay ──────────────────────────────────────────────── -->
+  <div id="options-overlay" class="opt-overlay hidden">
+    <div class="opt-panel">
+      <div class="opt-title">Options</div>
+      <button class="opt-btn opt-resume" id="opt-resume">▶ Resume</button>
+      <div class="opt-section">
+        <div class="opt-label">Grid Size</div>
+        <div class="opt-grid-btns">
+          <button class="opt-grid-btn" data-size="3">3×3</button>
+          <button class="opt-grid-btn active" data-size="5">5×5</button>
+          <button class="opt-grid-btn" data-size="7">7×7</button>
+        </div>
+      </div>
+      <button class="opt-btn opt-quit" id="opt-quit">✕ Quit</button>
+    </div>
+  </div>
+
+  <!-- ── Grid-size confirm overlay ─────────────────────────────────────────── -->
+  <div id="gridsize-overlay" class="opt-overlay hidden">
+    <div class="opt-panel">
+      <div class="opt-title">Change Grid Size?</div>
+      <p class="opt-warn">The game will restart and all current progress will be lost.</p>
+      <button class="opt-btn opt-confirm-ok" id="opt-gridsize-ok">Okay</button>
+      <button class="opt-btn opt-confirm-cancel" id="opt-gridsize-cancel">Nevermind</button>
     </div>
   </div>
 

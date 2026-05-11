@@ -10,14 +10,14 @@ const VAL = {
 // Weighted pool — high-frequency letters appear more often
 const POOL = 'AAAAAAAAABBBCCCDDDDEEEEEEEEEEEEFFFGGGHHHIIIIIIIIIJKLLLLMMMNNNNNNOOOOOOOOPPQRRRRRRSSSSTTTTTTUUUUVVWWXYYYYZ'.split('');
 
-// Ring of each 5×5 cell: 0=outer, 1=middle, 2=center
-const RING = (() => {
+// Build ring map for an N×N grid: 0=outer, increasing toward center
+function buildRing(n) {
   const r = [];
-  for (let row = 0; row < 5; row++)
-    for (let col = 0; col < 5; col++)
-      r.push(Math.min(row, col, 4 - row, 4 - col));
+  for (let row = 0; row < n; row++)
+    for (let col = 0; col < n; col++)
+      r.push(Math.min(row, col, n - 1 - row, n - 1 - col));
   return r;
-})();
+}
 
 // ── Level config ──────────────────────────────────────────────────────────────
 const LEVELS = [
@@ -168,9 +168,29 @@ WOKEN WOMAN WOMEN WORLD WORRY WORSE WORST WORTH WOULD WOUND WRATH WRING WROTE
 XYLEM YACHT YEARN YIELD YOUNG YOUTH ZESTY ZINGY`.trim().split(/\s+/).filter(w => w.length >= 3);
 
 // Short list used to pick a bonus word (common 3–5 letter words)
-const BONUS_POOL = ['CAT','DOG','HAT','SIT','RUN','FLY','TOP','SUN','BOX','CAN',
-  'STAR','LEAP','GLOW','RING','BLUE','FIRE','SNOW','CALM','BOLD','WARM',
-  'CATS','DOGS','RAGS','TOPS','BAKE','CAPE','ROLE','TONE','BONE','PINE'];
+// ── Bonus word pool — 5–7 letter adjectives and animals ──────────────────────
+const BONUS_POOL = [
+  // 5-letter animals
+  'TIGER','EAGLE','KOALA','PANDA','BISON','OTTER','RAVEN','COBRA','CRANE',
+  'HERON','SHREW','TAPIR','FINCH','VIPER','QUAIL','GECKO','TROUT',
+  // 6-letter animals
+  'FALCON','JAGUAR','WALRUS','MARMOT','BABOON','TOUCAN','PARROT','SALMON',
+  'IMPALA','RABBIT','TURTLE','WEASEL','BADGER','FERRET','PUFFIN','OSPREY',
+  'CONDOR','MAGPIE','GIBBON','IGUANA','LIZARD','GOPHER',
+  // 7-letter animals
+  'PENGUIN','DOLPHIN','SPARROW','PANTHER','CHEETAH','GIRAFFE','LOBSTER',
+  'HAMSTER','PEACOCK','VULTURE','BUFFALO','GORILLA','PELICAN','CARIBOU',
+  // 5-letter adjectives
+  'BRAVE','SWIFT','LUCKY','FUZZY','WITTY','JOLLY','PROUD','FANCY','VIVID',
+  'SUNNY','NOBLE','ZESTY','CRISP','SHARP','SLEEK','PLUMP',
+  // 6-letter adjectives
+  'GOLDEN','SILVER','BRIGHT','CLEVER','FROZEN','HUMBLE','GENTLE','MIGHTY',
+  'STORMY','BREEZY','NIMBLE','GLOSSY','FLUFFY','GRUMPY','FEISTY','BUBBLY',
+  'CHUNKY','LIVELY','DREAMY','CRAFTY','SERENE','FRISKY',
+  // 7-letter adjectives
+  'VIBRANT','RADIANT','PLAYFUL','CRIMSON','VERDANT','BASHFUL','ELEGANT',
+  'ANCIENT','FERTILE','FURIOUS',
+];
 
 async function loadWords() {
   try {
@@ -213,17 +233,24 @@ const S = {
   sel:       [],
   history:   [],
   bonusWord: '',
+  gridSize:  5,
 };
 
 // ── Grid helpers ──────────────────────────────────────────────────────────────
 function randLetter() { return POOL[Math.floor(Math.random() * POOL.length)]; }
-function newGrid()    { return RING.map(ring => ({ letter: randLetter(), ring })); }
+function newGrid()    { return buildRing(S.gridSize).map(ring => ({ letter: randLetter(), ring })); }
 function levelCfg()   { return LEVELS[Math.min(S.level - 1, LEVELS.length - 1)]; }
 
 function pickBonus() {
-  S.bonusWord = BONUS_POOL[Math.floor(Math.random() * BONUS_POOL.length)];
+  // Only pick words confirmed to be in the loaded dictionary
+  const pool = WORDS ? BONUS_POOL.filter(w => WORDS.has(w)) : BONUS_POOL;
+  const candidates = pool.length > 0 ? pool : BONUS_POOL;
+  let word;
+  do { word = candidates[Math.floor(Math.random() * candidates.length)]; }
+  while (candidates.length > 1 && word === S.bonusWord);
+  S.bonusWord = word;
   const el = $('bonus-word');
-  if (el) el.textContent = S.bonusWord;
+  if (el) el.textContent = word;
 }
 
 // ── Selection rules ───────────────────────────────────────────────────────────
@@ -234,13 +261,41 @@ function canSelect(idx) {
 }
 
 // ── Scoring ───────────────────────────────────────────────────────────────────
+function lm(len) {
+  return len <= 2 ? 0.5 : len === 3 ? 1 : len === 4 ? 1.5 : len === 5 ? 2 : len === 6 ? 2.5 : 3;
+}
+
 function wordScore(sel) {
   if (!sel.length) return 0;
+  const maxRing   = Math.floor(S.gridSize / 2);
   const letterSum = sel.reduce((s, i) => s + (VAL[S.tiles[i].letter] || 1), 0);
-  const len = sel.length;
-  const lm  = len <= 2 ? 0.5 : len === 3 ? 1 : len === 4 ? 1.5 : len === 5 ? 2 : len === 6 ? 2.5 : 3;
-  const cb  = S.tiles[sel[sel.length - 1]].ring === 2 ? 3 : 1;
-  return Math.floor(letterSum * lm * cb);
+  const cb        = S.tiles[sel[sel.length - 1]].ring === maxRing ? 3 : 1;
+  return Math.floor(letterSum * lm(sel.length) * cb);
+}
+
+// Live display value per tile — increases with word length and ring depth
+function tileDisplayValue(idx) {
+  const tile     = S.tiles[idx];
+  const base     = VAL[tile.letter] || 1;
+  const maxRing  = Math.floor(S.gridSize / 2);
+  // Linear scale: outer ring = 1×, center = 3×
+  const ringMult = maxRing === 0 ? 1 : 1 + (tile.ring / maxRing) * 2;
+  // Length multiplier for what the word would be if this tile is added next
+  return Math.max(1, Math.round(base * ringMult * lm(S.sel.length + 1)));
+}
+
+// ── Grid style ────────────────────────────────────────────────────────────────
+function applyGridStyles() {
+  const n    = S.gridSize;
+  const root = document.documentElement;
+  root.style.setProperty('--grid-cols', n);
+  if (n === 3) {
+    root.style.setProperty('--tile-sz', 'clamp(60px, 20vw, 120px)');
+  } else if (n === 7) {
+    root.style.setProperty('--tile-sz', 'clamp(26px, 9vw, 64px)');
+  } else {
+    root.style.removeProperty('--tile-sz'); // let CSS media queries handle 5×5
+  }
 }
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
@@ -277,9 +332,10 @@ function renderWordBar() {
     return;
   }
 
-  const pts   = wordScore(S.sel);
-  const last  = S.tiles[S.sel[S.sel.length - 1]];
-  const bonus = last.ring === 2 ? ' ⭐×3' : '';
+  const pts     = wordScore(S.sel);
+  const maxRing = Math.floor(S.gridSize / 2);
+  const last    = S.tiles[S.sel[S.sel.length - 1]];
+  const bonus   = last.ring === maxRing ? ' ⭐×3' : '';
   const chips = S.sel
     .map(i => `<span class="bar-chip r${S.tiles[i].ring}">${S.tiles[i].letter}</span>`)
     .join('');
@@ -292,8 +348,14 @@ function renderGrid() {
   const grid = $('grid');
   if (!grid) return;
 
-  if (grid.children.length !== 25) {
+  const n       = S.gridSize;
+  const total   = n * n;
+  const maxRing = Math.floor(n / 2);
+
+  if (grid.children.length !== total) {
     grid.innerHTML = '';
+    grid.style.gridTemplateColumns = `repeat(${n}, var(--tile-sz))`;
+    grid.style.gridTemplateRows    = `repeat(${n}, var(--tile-sz))`;
     S.tiles.forEach((_, idx) => {
       const el = document.createElement('div');
       el.id = 'tile-' + idx;
@@ -312,14 +374,15 @@ function renderGrid() {
 
     if (lEl.textContent !== t.letter) {
       lEl.textContent = t.letter;
-      vEl.textContent = VAL[t.letter] || 1;
       el.classList.add('flash-in');
       setTimeout(() => el.classList.remove('flash-in'), 380);
     }
+    vEl.textContent = tileDisplayValue(idx);
 
     const isSel  = S.sel.includes(idx);
     const isBlk  = !isSel && S.sel.length > 0 && !canSelect(idx);
-    el.className = `tile r${t.ring}${isSel ? ' sel' : ''}${isBlk ? ' blocked' : ''}`;
+    const isCtr  = t.ring === maxRing;
+    el.className = `tile r${t.ring}${isCtr ? ' center' : ''}${isSel ? ' sel' : ''}${isBlk ? ' blocked' : ''}`;
   });
 }
 
@@ -412,6 +475,33 @@ function submitWord() {
   if (S.score >= cfg.target) setTimeout(showLevelComplete, 550);
 }
 
+// ── Options menu ──────────────────────────────────────────────────────────────
+let pendingGridSize = null;
+
+function openOptions() {
+  document.querySelectorAll('.opt-grid-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.size) === S.gridSize);
+  });
+  $('options-overlay').classList.remove('hidden');
+}
+function closeOptions() {
+  $('options-overlay').classList.add('hidden');
+}
+function openGridConfirm(size) {
+  pendingGridSize = size;
+  $('gridsize-overlay').classList.remove('hidden');
+}
+function closeGridConfirm() {
+  pendingGridSize = null;
+  $('gridsize-overlay').classList.add('hidden');
+}
+function applyGridSize(size) {
+  S.gridSize = size;
+  closeGridConfirm();
+  closeOptions();
+  startGame();
+}
+
 // ── Screen transitions ────────────────────────────────────────────────────────
 function startGame() {
   S.level   = 1;
@@ -420,6 +510,7 @@ function startGame() {
   S.sel     = [];
   S.tiles   = newGrid();
   if ($('grid')) $('grid').innerHTML = '';
+  applyGridStyles();
   pickBonus();
   showScreen('game');
   render();
@@ -441,6 +532,7 @@ function nextLevel() {
   S.sel     = [];
   S.tiles   = newGrid();
   if ($('grid')) $('grid').innerHTML = '';
+  applyGridStyles();
   pickBonus();
   showScreen('game');
   render();
@@ -473,12 +565,14 @@ async function init() {
   $('btn-play-again').addEventListener('click', startGame);
   $('btn-go-menu').addEventListener('click', () => { showScreen('menu'); updateBestScore(); });
   $('btn-hint').addEventListener('click', giveHint);
-  $('btn-hdr-menu').addEventListener('click', () => {
-    if (confirm('Return to menu? Progress will be lost.')) {
-      showScreen('menu');
-      updateBestScore();
-    }
+  $('btn-hdr-menu').addEventListener('click', openOptions);
+  $('opt-resume').addEventListener('click', closeOptions);
+  $('opt-quit').addEventListener('click', () => { window.location.href = 'https://wagonwednesday.app'; });
+  document.querySelectorAll('.opt-grid-btn').forEach(btn => {
+    btn.addEventListener('click', () => openGridConfirm(parseInt(btn.dataset.size)));
   });
+  $('opt-gridsize-ok').addEventListener('click', () => pendingGridSize && applyGridSize(pendingGridSize));
+  $('opt-gridsize-cancel').addEventListener('click', closeGridConfirm);
 
   document.addEventListener('keydown', e => {
     if (S.phase !== 'game') return;
