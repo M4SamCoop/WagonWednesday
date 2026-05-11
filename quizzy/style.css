@@ -772,6 +772,111 @@ body {
   .left-panel { width: 86px; }
 }
 
+/* ── Portrait mobile: word panel moves to bottom, grid fills full width ──────── */
+@media (max-width: 480px) and (orientation: portrait) {
+  :root {
+    /* No left panel overhead — use full viewport width for tiles */
+    --tile-sz: clamp(44px, calc((100vw - 24px) / 5), 78px);
+  }
+
+  /* Stack grid on top, word panel below */
+  .game-body { flex-direction: column; }
+
+  .right-panel {
+    order: 1;
+    flex: 1;
+    width: 100%;
+  }
+
+  /* Left panel becomes a compact horizontal strip at the bottom */
+  .left-panel {
+    order: 2;
+    width: 100%;
+    height: clamp(88px, 22vh, 128px);
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "bear header"
+      "bear book";
+    border-right: none;
+    border-top: 4px solid #003388;
+  }
+
+  .words-header {
+    grid-area: header;
+    border-bottom: 2px solid #007788;
+    padding: 3px 8px;
+  }
+
+  .book-wrap {
+    grid-area: book;
+    padding: 3px 5px 3px 6px;
+    flex: none; /* override flex:1 from base */
+  }
+
+  .bear-area {
+    grid-area: bear;
+    border-top: none;
+    border-right: 3px solid #003388;
+    padding: 6px 3px;
+    justify-content: center;
+  }
+
+  .bear-badge {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+    border-width: 3px;
+  }
+
+  .hint-text { display: none; }
+
+  /* Book becomes a horizontal word-chip scroller */
+  .book {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .book::-webkit-scrollbar { display: none; }
+
+  .book-spine { display: none; }
+
+  .book-page {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 3px;
+    flex-shrink: 0;
+    height: 100%;
+    /* Remove ruled-line background from base styles */
+    background: none;
+    background-image: none;
+    background-size: unset;
+    background-position: unset;
+    line-height: 1.4;
+    overflow: visible;
+  }
+
+  .book-word {
+    white-space: nowrap;
+    background: rgba(17,85,204,0.14);
+    padding: 2px 7px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(17,85,204,0.28);
+    font-size: clamp(0.55rem, 2.8vw, 0.7rem);
+    line-height: 1.5;
+    font-weight: 700;
+    color: #111;
+  }
+}
+
 @media (min-width: 900px) {
   :root { --tile-sz: min(9.5vw, 9.5vh, 92px); }
 }

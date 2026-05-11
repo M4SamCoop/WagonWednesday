@@ -285,16 +285,28 @@ function tileDisplayValue(idx) {
 }
 
 // ── Grid style ────────────────────────────────────────────────────────────────
+function isPortraitMobile() {
+  return window.innerWidth <= 480 && window.innerWidth < window.innerHeight;
+}
+
 function applyGridStyles() {
-  const n    = S.gridSize;
-  const root = document.documentElement;
+  const n       = S.gridSize;
+  const root    = document.documentElement;
+  const portrait = isPortraitMobile();
   root.style.setProperty('--grid-cols', n);
-  if (n === 3) {
-    root.style.setProperty('--tile-sz', 'clamp(60px, 20vw, 120px)');
+
+  if (n === 5) {
+    // CSS media queries handle 5×5 tile sizing (portrait and landscape)
+    root.style.removeProperty('--tile-sz');
+  } else if (n === 3) {
+    // Portrait: full-width, no left panel. Landscape/wide: with left panel.
+    root.style.setProperty('--tile-sz',
+      portrait ? 'clamp(70px, calc((100vw - 30px) / 3), 110px)'
+               : 'clamp(60px, 20vw, 120px)');
   } else if (n === 7) {
-    root.style.setProperty('--tile-sz', 'clamp(26px, 9vw, 64px)');
-  } else {
-    root.style.removeProperty('--tile-sz'); // let CSS media queries handle 5×5
+    root.style.setProperty('--tile-sz',
+      portrait ? 'clamp(26px, calc((100vw - 30px) / 7), 54px)'
+               : 'clamp(26px, 9vw, 64px)');
   }
 }
 
@@ -579,6 +591,11 @@ async function init() {
     if (e.key === 'Enter')     submitWord();
     if (e.key === 'Escape')    clearSel();
     if (e.key === 'Backspace') { S.sel.pop(); render(); }
+  });
+
+  // Re-apply tile sizing on orientation change / window resize
+  window.addEventListener('resize', () => {
+    if (S.phase === 'game') applyGridStyles();
   });
 
   await loadWords();
