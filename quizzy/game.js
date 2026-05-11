@@ -226,14 +226,19 @@ const isWord = w => WORDS && WORDS.has(w.toUpperCase());
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const S = {
-  phase:     'loading',
-  level:     1,
-  score:     0,
-  tiles:     [],
-  sel:       [],
-  history:   [],
-  bonusWord: '',
-  gridSize:  5,
+  phase:          'loading',
+  level:          1,
+  score:          0,
+  tiles:          [],
+  sel:            [],
+  history:        [],
+  bonusWord:      '',
+  gridSize:       5,
+  animating:      false,
+  isDaily:        false,
+  dailyDate:      '',
+  dailyTimeLeft:  180,
+  dailyTimerId:   null,
 };
 
 // ── Grid helpers ──────────────────────────────────────────────────────────────
@@ -251,6 +256,26 @@ function pickBonus() {
   S.bonusWord = word;
   const el = $('bonus-word');
   if (el) el.textContent = word;
+}
+
+// ── Daily helpers ─────────────────────────────────────────────────────────────
+function todayKey() { return new Date().toISOString().slice(0, 10); }
+
+function seededRand(seed) {
+  // Mulberry32 — high-quality 32-bit PRNG
+  let s = seed >>> 0;
+  return () => {
+    s += 0x6D2B79F5;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function dailyGrid() {
+  const [y, m, d] = todayKey().split('-').map(Number);
+  const rng = seededRand(y * 10000 + m * 100 + d);
+  return buildRing(5).map(ring => ({ letter: POOL[Math.floor(rng() * POOL.length)], ring }));
 }
 
 // ── Selection rules ───────────────────────────────────────────────────────────
@@ -426,8 +451,57 @@ function msg(text, type = 'info') {
 }
 
 // ── Game actions ──────────────────────────────────────────────────────────────
+// ── Word path animation ───────────────────────────────────────────────────────
+function animateWordPath(selCopy, callback) {
+  S.animating = true;
+  if (selCopy.length < 2) { S.animating = false; callback(); return; }
+
+  const NS  = 'http://www.w3.org/2000/svg';
+  const pts = selCopy.map(idx => {
+    const r = $('tile-' + idx).getBoundingClientRect();
+    return [r.left + r.width / 2, r.top + r.height / 2];
+  });
+
+  const svg = document.createElementNS(NS, 'svg');
+  svg.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50;overflow:visible;';
+
+  // Glowing line
+  const pathEl = document.createElementNS(NS, 'path');
+  pathEl.setAttribute('d', pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(0)},${y.toFixed(0)}`).join(''));
+  pathEl.setAttribute('stroke', '#FFE000');
+  pathEl.setAttribute('stroke-width', '5');
+  pathEl.setAttribute('fill', 'none');
+  pathEl.setAttribute('stroke-linecap', 'round');
+  pathEl.setAttribute('stroke-linejoin', 'round');
+  pathEl.style.filter = 'drop-shadow(0 0 7px rgba(255,220,0,0.95))';
+  svg.appendChild(pathEl);
+
+  // Dot at each waypoint; last dot (destination) is orange
+  pts.forEach(([x, y], i) => {
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', x.toFixed(0));  c.setAttribute('cy', y.toFixed(0));
+    c.setAttribute('r', i === pts.length - 1 ? 10 : 7);
+    c.setAttribute('fill', i === pts.length - 1 ? '#FF6600' : '#FFE000');
+    c.style.filter = 'drop-shadow(0 0 5px rgba(255,180,0,1))';
+    svg.appendChild(c);
+  });
+
+  document.body.appendChild(svg);
+
+  // Stroke-dashoffset draw animation
+  const len = pathEl.getTotalLength();
+  pathEl.style.strokeDasharray  = len;
+  pathEl.style.strokeDashoffset = len;
+  requestAnimationFrame(() => {
+    pathEl.style.transition     = 'stroke-dashoffset 0.27s ease-out';
+    pathEl.style.strokeDashoffset = '0';
+  });
+
+  setTimeout(() => { svg.remove(); S.animating = false; callback(); }, 320);
+}
+
 function onTileClick(idx) {
-  if (S.phase !== 'game') return;
+  if (S.phase !== 'game' || S.animating) return;
 
   // Tap last selected tile to undo it
   if (S.sel.length && S.sel[S.sel.length - 1] === idx) {
@@ -454,6 +528,7 @@ function shuffleLetters() {
 }
 
 function submitWord() {
+  if (S.animating) return;
   const cfg  = levelCfg();
   const word = S.sel.map(i => S.tiles[i].letter).join('');
 
@@ -467,24 +542,22 @@ function submitWord() {
     msg(`"${word}" already used!`, 'bad'); return;
   }
 
+  const selCopy = [...S.sel];
   const isBonus = word === S.bonusWord;
-  const pts = wordScore(S.sel) * (isBonus ? 2 : 1);
-  S.score  += pts;
-  S.history.push({ word, pts });
+  const pts     = wordScore(selCopy) * (isBonus ? 2 : 1);
 
-  const used = [...S.sel];
-  S.sel = [];
-  used.forEach(i => { S.tiles[i].letter = randLetter(); });
+  animateWordPath(selCopy, () => {
+    S.score  += pts;
+    S.history.push({ word, pts });
+    S.sel = [];
+    selCopy.forEach(i => { S.tiles[i].letter = randLetter(); });
 
-  if (isBonus) {
-    msg(`🎉 BONUS WORD! +${pts} pts!`, 'ok');
-    pickBonus();
-  } else {
-    msg(`+${pts} pts!`, 'ok');
-  }
-  render();
+    if (isBonus) { msg(`🎉 BONUS WORD! +${pts} pts!`, 'ok'); pickBonus(); }
+    else         { msg(`+${pts} pts!`, 'ok'); }
+    render();
 
-  if (S.score >= cfg.target) setTimeout(showLevelComplete, 550);
+    if (!S.isDaily && S.score >= cfg.target) setTimeout(showLevelComplete, 550);
+  });
 }
 
 // ── Options menu ──────────────────────────────────────────────────────────────
@@ -514,8 +587,102 @@ function applyGridSize(size) {
   startGame();
 }
 
+// ── Daily challenge ───────────────────────────────────────────────────────────
+function renderTimer() {
+  const el = $('hdr-timer');
+  if (!el) return;
+  const t = Math.max(0, S.dailyTimeLeft);
+  el.textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  el.className   = t <= 30 ? 'urgent' : '';
+}
+
+function stopDailyTimer() {
+  clearInterval(S.dailyTimerId);
+  S.dailyTimerId = null;
+}
+
+function showDailyComplete() {
+  stopDailyTimer();
+  const dateStr = new Date(S.dailyDate + 'T12:00:00').toLocaleDateString('en-US',
+    { month: 'long', day: 'numeric', year: 'numeric' });
+  const result  = { date: S.dailyDate, score: S.score, words: S.history.length };
+  try { localStorage.setItem('qwc_daily_' + S.dailyDate, JSON.stringify(result)); } catch (_) {}
+  $('dc-date').textContent  = dateStr;
+  $('dc-score').textContent = `🎯 ${S.score} pts`;
+  $('dc-words').textContent = `${S.history.length} word${S.history.length === 1 ? '' : 's'} found`;
+  showScreen('dailyComplete');
+}
+
+function shareDailyResult() {
+  const dateStr = new Date(S.dailyDate + 'T12:00:00').toLocaleDateString('en-US',
+    { month: 'short', day: 'numeric', year: 'numeric' });
+  // Spoiler-free ring pattern (same for every player)
+  const rings = buildRing(5);
+  let grid = '';
+  for (let row = 0; row < 5; row++)
+    grid += rings.slice(row * 5, row * 5 + 5).map(r => r === 0 ? '🟪' : r === 1 ? '🟣' : '⭐').join('') + '\n';
+
+  const text = `Quizzy Daily — ${dateStr}\n🎯 ${S.score} pts · ${S.history.length} words\n${grid}wagonwednesday.app/quizzy`;
+  if (navigator.share)          navigator.share({ text }).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => msg('Copied! 📋', 'ok'));
+}
+
+function showDailyAlready(result) {
+  const dateStr = new Date(result.date + 'T12:00:00').toLocaleDateString('en-US',
+    { month: 'long', day: 'numeric' });
+  $('dd-date').textContent   = dateStr;
+  $('dd-result').textContent = `${result.score} pts · ${result.words} word${result.words === 1 ? '' : 's'}`;
+  showScreen('dailyDone');
+}
+
+function setDailyUI(on) {
+  $('stat-goal').style.display  = on ? 'none' : '';
+  $('stat-level').style.display = on ? 'none' : '';
+  $('stat-timer').style.display = on ? ''     : 'none';
+}
+
+function startDailyGame() {
+  const key = todayKey();
+  try {
+    const saved = localStorage.getItem('qwc_daily_' + key);
+    if (saved) { showDailyAlready(JSON.parse(saved)); return; }
+  } catch (_) {}
+
+  stopDailyTimer();
+  S.isDaily       = true;
+  S.dailyDate     = key;
+  S.level         = 1;
+  S.score         = 0;
+  S.history       = [];
+  S.sel           = [];
+  S.animating     = false;
+  S.gridSize      = 5;
+  S.dailyTimeLeft = 180;
+  S.tiles         = dailyGrid();
+
+  if ($('grid')) $('grid').innerHTML = '';
+  applyGridStyles();
+  pickBonus();
+  setDailyUI(true);
+  showScreen('game');
+  render();
+  renderTimer();
+
+  S.dailyTimerId = setInterval(() => {
+    S.dailyTimeLeft = Math.max(0, S.dailyTimeLeft - 1);
+    renderTimer();
+    if (S.dailyTimeLeft <= 0) { stopDailyTimer(); setTimeout(showDailyComplete, 450); }
+  }, 1000);
+
+  msg('Daily Challenge · 3 minutes · Score as many points as you can!', 'info');
+}
+
 // ── Screen transitions ────────────────────────────────────────────────────────
 function startGame() {
+  stopDailyTimer();
+  S.isDaily   = false;
+  S.animating = false;
+  setDailyUI(false);
   S.level   = 1;
   S.score   = 0;
   S.history = [];
@@ -538,6 +705,10 @@ function showLevelComplete() {
 }
 
 function nextLevel() {
+  stopDailyTimer();
+  S.isDaily   = false;
+  S.animating = false;
+  setDailyUI(false);
   S.level  += 1;
   S.score   = 0;
   S.history = [];
@@ -586,8 +757,13 @@ async function init() {
   $('opt-gridsize-ok').addEventListener('click', () => pendingGridSize && applyGridSize(pendingGridSize));
   $('opt-gridsize-cancel').addEventListener('click', closeGridConfirm);
 
+  $('btn-daily').addEventListener('click', startDailyGame);
+  $('btn-dc-share').addEventListener('click', shareDailyResult);
+  $('btn-dc-menu').addEventListener('click', () => { showScreen('menu'); updateBestScore(); });
+  $('btn-dd-menu').addEventListener('click', () => { showScreen('menu'); updateBestScore(); });
+
   document.addEventListener('keydown', e => {
-    if (S.phase !== 'game') return;
+    if (S.phase !== 'game' || S.animating) return;
     if (e.key === 'Enter')     submitWord();
     if (e.key === 'Escape')    clearSel();
     if (e.key === 'Backspace') { S.sel.pop(); render(); }

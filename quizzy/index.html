@@ -37,6 +37,7 @@
       </div>
       <p class="menu-sub">Build words from the letter grid!</p>
       <button class="btn btn-primary" id="btn-play">Play!</button>
+      <button class="btn btn-daily"   id="btn-daily">📅 Daily</button>
       <button class="btn btn-ghost"   id="btn-howto">How to Play</button>
       <p id="best-score"></p>
     </div>
@@ -72,9 +73,10 @@
         </div>
         <div class="game-stats">
           <span class="stat-item show-mobile">SCORE <strong id="hdr-score">0</strong></span>
-          <span class="stat-item">GOAL: <strong id="hdr-target">100</strong></span>
-          <span class="stat-item">LEVEL <strong id="hdr-lvl">1</strong></span>
+          <span class="stat-item" id="stat-goal">GOAL: <strong id="hdr-target">100</strong></span>
+          <span class="stat-item" id="stat-level">LEVEL <strong id="hdr-lvl">1</strong></span>
           <span class="stat-item">WORDS <strong id="hdr-words">0</strong></span>
+          <span class="stat-item show-mobile" id="stat-timer" style="display:none">⏱ <strong id="hdr-timer">3:00</strong></span>
         </div>
         <button class="btn-hamburger" id="btn-hdr-menu" title="Options" aria-label="Options">
           <span></span><span></span><span></span>
@@ -147,6 +149,30 @@
       <p class="overlay-sub" id="go-reason"></p>
       <button class="btn btn-primary" id="btn-play-again">Play Again</button>
       <button class="btn btn-ghost"   id="btn-go-menu">Menu</button>
+    </div>
+  </div>
+
+  <!-- ── Daily Complete ────────────────────────────────────────────────────── -->
+  <div id="sc-dailyComplete" class="screen">
+    <div class="overlay-inner">
+      <div class="overlay-icon">📅</div>
+      <div class="overlay-title">Daily Done!</div>
+      <p class="overlay-sub" id="dc-date"></p>
+      <p class="overlay-sub" id="dc-score"></p>
+      <p class="overlay-sub" id="dc-words"></p>
+      <button class="btn btn-primary" id="btn-dc-share">Share Result 📋</button>
+      <button class="btn btn-ghost"   id="btn-dc-menu">Main Menu</button>
+    </div>
+  </div>
+
+  <!-- ── Daily Already Done ─────────────────────────────────────────────────── -->
+  <div id="sc-dailyDone" class="screen">
+    <div class="overlay-inner">
+      <div class="overlay-icon">✅</div>
+      <div class="overlay-title">Already Played!</div>
+      <p class="overlay-sub" id="dd-date">Today's puzzle</p>
+      <p class="overlay-sub" id="dd-result"></p>
+      <button class="btn btn-ghost" id="btn-dd-menu">Back to Menu</button>
     </div>
   </div>
 
