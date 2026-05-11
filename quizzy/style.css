@@ -732,10 +732,24 @@ body {
 }
 
 @media (max-width: 480px) {
-  :root { --tile-sz: clamp(44px, 16vw, 60px); }
-  .left-panel { width: clamp(110px, 28vw, 145px); }
+  :root {
+    /* Tile size derived from available width:
+       (100vw - left-panel - panel-border - 2×right-padding - 4×gap) / 5
+       ≈ (100vw - 126px) / 5  → capped so tiles never crowd on wider phones */
+    --tile-sz: clamp(34px, calc((100vw - 126px) / 5), 52px);
+    --tile-gap: 3px;
+  }
+  .left-panel { width: clamp(96px, 25vw, 126px); }
   .stat-item { display: none; }
   .stat-item.show-mobile { display: flex; }
+}
+
+@media (max-width: 360px) {
+  :root {
+    --tile-sz: clamp(32px, calc((100vw - 110px) / 5), 44px);
+    --tile-gap: 2px;
+  }
+  .left-panel { width: 86px; }
 }
 
 @media (min-width: 900px) {
