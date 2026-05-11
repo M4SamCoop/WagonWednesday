@@ -8,6 +8,7 @@ const Wagon = ({
   width = 200,
   color = 'var(--wagon)',
   paper = 'var(--paper)',
+  windowColor,
   stroke = 10,
   spinning = false,
   showShadow = false,
@@ -16,6 +17,7 @@ const Wagon = ({
 }) => {
   const VB_W = 1600, VB_H = 900;
   const h = (width * VB_H) / VB_W;
+  const winColor = windowColor !== undefined ? windowColor : paper;
   return (
     <svg
       width={width}
@@ -39,9 +41,9 @@ const Wagon = ({
 
       {/* Window panes — cut through with paper color */}
       <g stroke={color} strokeWidth={stroke} strokeLinejoin="round">
-        <path d="m753 376.35l253.5 15-112.5-109.5-163.5-4.5z" fill={paper} />
-        <path d="m468 370l239 8-21.5-100.65-193.5-3z" fill={paper} />
-        <path d="m423 364.35l28.5-90-259.5-6-30 93z" fill={paper} />
+        <path d="m753 376.35l253.5 15-112.5-109.5-163.5-4.5z" fill={winColor} />
+        <path d="m468 370l239 8-21.5-100.65-193.5-3z" fill={winColor} />
+        <path d="m423 364.35l28.5-90-259.5-6-30 93z" fill={winColor} />
       </g>
 
       {/* Side / belt lines + light clusters */}

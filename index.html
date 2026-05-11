@@ -19,7 +19,7 @@
     --ink:#171513;
     --ink-2:#3a3633;
     --ink-3:#7a736b;
-    --accent:oklch(0.62 0.17 32);
+    --accent:#477246;
     --wagon:#1a1a1a;
   }
   *{box-sizing:border-box;}
@@ -50,6 +50,10 @@
   @keyframes wheel-spin { to { transform: rotate(1turn); } }
   .wheel-spokes { transform-origin: center; transform-box: fill-box; }
   .wheel-spokes.spinning { animation: wheel-spin .18s linear infinite; }
+
+  /* Slowly spinning hero wheel */
+  @keyframes wheel-slow-spin { to { transform: rotate(1turn); } }
+  .wheel-slow { transform-origin: center; transform-box: fill-box; animation: wheel-slow-spin 6s linear infinite; }
 
   /* Marquee scroll */
   @keyframes marquee-scroll {
@@ -91,7 +95,7 @@
 
   /* Tag underline */
   .squiggle{
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 6'><path d='M0 3 Q 10 0 20 3 T 40 3 T 60 3 T 80 3' fill='none' stroke='%23b8512c' stroke-width='1.8'/></svg>");
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 6'><path d='M0 3 Q 10 0 20 3 T 40 3 T 60 3 T 80 3' fill='none' stroke='%23477246' stroke-width='1.8'/></svg>");
     background-repeat:repeat-x;background-position:0 100%;background-size:80px 6px;
     padding-bottom:6px;
   }

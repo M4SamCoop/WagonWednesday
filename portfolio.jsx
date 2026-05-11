@@ -40,7 +40,7 @@ const Header = ({ wagonColor }) => {
       style={{
         display: 'flex',
         alignItems: 'center',
-        padding: atTop ? '22px 44px' : '10px 44px',
+        padding: atTop ? '12px 44px' : '7px 44px',
         borderBottom: '1.25px solid var(--ink)',
         background: 'var(--paper)',
         position: 'fixed',
@@ -52,9 +52,9 @@ const Header = ({ wagonColor }) => {
         transition: 'transform 0.3s ease, padding 0.3s ease',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <Wagon width={88} color={wagonColor} />
-        <span className="mono" style={{ fontSize: 14, fontWeight: 700, letterSpacing: '.03em' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <Wagon width={56} color={wagonColor} />
+        <span className="mono" style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.03em' }}>
           Wagon Wednesday.
         </span>
       </div>
@@ -63,6 +63,31 @@ const Header = ({ wagonColor }) => {
 };
 
 /* ───────────────────────── hero ───────────────────────── */
+
+const SpinningWheel = ({ color, size = 110 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="268 501 204 204"
+    style={{ display: 'block', flexShrink: 0 }}
+  >
+    <circle cx="370" cy="603" r="92" fill={color} />
+    <circle cx="370" cy="603" r="44" fill="var(--paper)" stroke={color} strokeWidth={10} />
+    <g
+      className="wheel-slow"
+      style={{ transformOrigin: '370px 603px' }}
+      stroke={color}
+      strokeWidth={9}
+      strokeLinecap="round"
+    >
+      <line x1="330" y1="603" x2="410" y2="603" />
+      <line x1="370" y1="563" x2="370" y2="643" />
+      <line x1="341" y1="574" x2="399" y2="632" />
+      <line x1="341" y1="632" x2="399" y2="574" />
+    </g>
+    <circle cx="370" cy="603" r="11" fill={color} />
+  </svg>
+);
 
 const HeroFrame = ({ p, big, dim }) => (
   <div style={{ opacity: dim ? 0.42 : 1, width: '100%', maxWidth: big ? 420 : 220, justifySelf: big ? 'stretch' : undefined }}>
@@ -100,8 +125,10 @@ const Hero = ({ tweaks, onOpenProject }) => {
   const [paused, setPaused] = useState(false);
   const [driving, setDriving] = useState(false);
   const [puffKey, setPuffKey] = useState(0);
-  const [wagonLeft, setWagonLeft] = useState('50%');
+  const [wagonLeft, setWagonLeft] = useState('15%');
   const [wagonHasTransition, setWagonHasTransition] = useState(true);
+  const [slideDir, setSlideDir] = useState(0);   // -1 = going next (grid shifts left), +1 = going prev
+  const [slideTx, setSlideTx] = useState(true);  // enables CSS transition on the grid
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -114,21 +141,28 @@ const Hero = ({ tweaks, onOpenProject }) => {
     if (driving) return;
     setPuffKey(k => k + 1);
     setDriving(true);
+
+    // Slide grid left/right and exit wagon right
+    setSlideDir(dir);
+    setSlideTx(true);
     setWagonHasTransition(true);
     setWagonLeft('110%');
 
-    // At 520ms: switch slide, snap wagon to left off-screen instantly
+    // At 450ms: snap grid back, update slide, snap wagon to off-screen left
     setTimeout(() => {
+      setSlideTx(false);
+      setSlideDir(0);
       setIdx(i => (i + dir + FEATURED.length) % FEATURED.length);
       setWagonHasTransition(false);
-      setWagonLeft('-15%');
-    }, 520);
+      setWagonLeft('-20%');
+    }, 450);
 
-    // At 560ms: re-enable transition, wagon drives in from left to center
+    // At 490ms: re-enable transitions, wagon drives in from left edge
     setTimeout(() => {
+      setSlideTx(true);
       setWagonHasTransition(true);
-      setWagonLeft('50%');
-    }, 560);
+      setWagonLeft('15%');
+    }, 490);
 
     setTimeout(() => {
       setDriving(false);
@@ -142,13 +176,14 @@ const Hero = ({ tweaks, onOpenProject }) => {
 
   return (
     <section style={{ padding: '40px 44px 0', position: 'relative' }}>
-      <div style={{ marginBottom: 24 }}>
+      {/* Heading + spinning wheel */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, marginBottom: 24 }}>
         <h1
           style={{
             margin: 0,
             fontSize: 'clamp(40px, 6vw, 72px)',
             fontWeight: 900,
-            lineHeight: 0.95,
+            lineHeight: 1.1,
             letterSpacing: '-0.025em',
             maxWidth: 760,
           }}
@@ -157,9 +192,10 @@ const Hero = ({ tweaks, onOpenProject }) => {
           mostly on <span className="squiggle">Wednesdays</span>
           <span style={{ color: 'var(--accent)' }}>.</span>
         </h1>
+        <SpinningWheel color={tweaks.wagonColor} size={120} />
       </div>
 
-      {/* The marquee row */}
+      {/* The carousel */}
       <div style={{ position: 'relative' }}>
         <div
           className="mono"
@@ -190,7 +226,7 @@ const Hero = ({ tweaks, onOpenProject }) => {
             overflow: 'hidden',
           }}
         >
-          {/* frames row */}
+          {/* frames row — slides left/right on transition */}
           <div
             style={{
               display: 'grid',
@@ -198,8 +234,8 @@ const Hero = ({ tweaks, onOpenProject }) => {
               gap: 24,
               padding: '0 44px',
               alignItems: 'flex-end',
-              transition: 'transform .5s cubic-bezier(.4,.7,.3,1)',
-              transform: driving ? 'translateX(-40px)' : 'translateX(0)',
+              transform: slideDir !== 0 ? `translateX(${-slideDir * 38}%)` : 'translateX(0)',
+              transition: slideTx ? 'transform 0.45s cubic-bezier(.4,0,.2,1)' : 'none',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 0 }}>
@@ -237,7 +273,7 @@ const Hero = ({ tweaks, onOpenProject }) => {
                 >
                   <div style={{ position: 'relative' }}>
                     <ExhaustPuff trigger={puffKey} />
-                    <Wagon width={120} spinning={driving} color={tweaks.wagonColor} showShadow />
+                    <Wagon width={120} spinning={driving} color={tweaks.wagonColor} windowColor="transparent" showShadow />
                   </div>
                 </button>
                 <div
@@ -548,7 +584,7 @@ const App = () => {
       <TopRoadLoader active={topActive} progress={topProgress} wagonColor={tweaks.wagonColor} />
 
       <Header wagonColor={tweaks.wagonColor} />
-      <div style={{ height: 100 }} />
+      <div style={{ height: 68 }} />
 
       <Hero tweaks={tweaks} onOpenProject={loader.run} />
       <Pile onOpenProject={loader.run} />
