@@ -51,9 +51,13 @@
   .wheel-spokes { transform-origin: center; transform-box: fill-box; }
   .wheel-spokes.spinning { animation: wheel-spin .18s linear infinite; }
 
-  /* Slowly spinning hero wheel */
+  /* Slowly spinning hero wheel — animation applied to SVG element itself */
   @keyframes wheel-slow-spin { to { transform: rotate(1turn); } }
-  .wheel-slow { transform-origin: center; transform-box: fill-box; animation: wheel-slow-spin 6s linear infinite; }
+  .wheel-slow { animation: wheel-slow-spin 6s linear infinite; }
+
+  /* Carousel slide transitions */
+  @keyframes slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  @keyframes slide-out-left { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 
   /* Marquee scroll */
   @keyframes marquee-scroll {

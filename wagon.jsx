@@ -8,7 +8,6 @@ const Wagon = ({
   width = 200,
   color = 'var(--wagon)',
   paper = 'var(--paper)',
-  windowColor,
   stroke = 10,
   spinning = false,
   showShadow = false,
@@ -17,7 +16,6 @@ const Wagon = ({
 }) => {
   const VB_W = 1600, VB_H = 900;
   const h = (width * VB_H) / VB_W;
-  const winColor = windowColor !== undefined ? windowColor : paper;
   return (
     <svg
       width={width}
@@ -30,20 +28,21 @@ const Wagon = ({
         <ellipse cx="800" cy="715" rx="680" ry="16" fill="rgba(0,0,0,.18)" />
       )}
 
-      {/* Body silhouette */}
+      {/* Body with window cutouts — evenodd creates transparent holes for the windows */}
       <path
-        d="m109.5 233.85l795 12 130.5 130.5 501 24 1.5 94.5 21 27-4.5 88.5-147 13.5-43.5-133.5-162-1.5-46.5 127.5h-474l-183-10.5-34.5-117-175.5-9-46.5 126-184.5-31.5-16-84.35 33-1 65.5-196.65z"
+        d="m109.5 233.85l795 12 130.5 130.5 501 24 1.5 94.5 21 27-4.5 88.5-147 13.5-43.5-133.5-162-1.5-46.5 127.5h-474l-183-10.5-34.5-117-175.5-9-46.5 126-184.5-31.5-16-84.35 33-1 65.5-196.65z M753 376.35l253.5 15-112.5-109.5-163.5-4.5z M468 370l239 8-21.5-100.65-193.5-3z M423 364.35l28.5-90-259.5-6-30 93z"
         fill={color}
+        fillRule="evenodd"
         stroke={color}
         strokeWidth={stroke / 2}
         strokeLinejoin="round"
       />
 
-      {/* Window panes — cut through with paper color */}
-      <g stroke={color} strokeWidth={stroke} strokeLinejoin="round">
-        <path d="m753 376.35l253.5 15-112.5-109.5-163.5-4.5z" fill={winColor} />
-        <path d="m468 370l239 8-21.5-100.65-193.5-3z" fill={winColor} />
-        <path d="m423 364.35l28.5-90-259.5-6-30 93z" fill={winColor} />
+      {/* Window borders */}
+      <g stroke={color} strokeWidth={stroke} strokeLinejoin="round" fill="none">
+        <path d="M753 376.35l253.5 15-112.5-109.5-163.5-4.5z" />
+        <path d="M468 370l239 8-21.5-100.65-193.5-3z" />
+        <path d="M423 364.35l28.5-90-259.5-6-30 93z" />
       </g>
 
       {/* Side / belt lines + light clusters */}

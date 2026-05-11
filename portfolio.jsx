@@ -64,20 +64,21 @@ const Header = ({ wagonColor }) => {
 
 /* ───────────────────────── hero ───────────────────────── */
 
+/* Rotating wagon wheel — animation on the SVG element itself so transform-origin
+   is simply the center of the rendered square, which maps to the wheel center. */
 const SpinningWheel = ({ color, size = 110 }) => (
   <svg
     width={size}
     height={size}
     viewBox="268 501 204 204"
+    className="wheel-slow"
     style={{ display: 'block', flexShrink: 0 }}
   >
     <circle cx="370" cy="603" r="92" fill={color} />
-    <circle cx="370" cy="603" r="44" fill="var(--paper)" stroke={color} strokeWidth={10} />
+    <circle cx="370" cy="603" r="44" fill="var(--paper)" stroke={color} strokeWidth={6} />
     <g
-      className="wheel-slow"
-      style={{ transformOrigin: '370px 603px' }}
       stroke={color}
-      strokeWidth={9}
+      strokeWidth={7}
       strokeLinecap="round"
     >
       <line x1="330" y1="603" x2="410" y2="603" />
@@ -126,10 +127,18 @@ const Hero = ({ tweaks, onOpenProject }) => {
   const [driving, setDriving] = useState(false);
   const [puffKey, setPuffKey] = useState(0);
   const [wagonLeft, setWagonLeft] = useState('15%');
-  const [wagonHasTransition, setWagonHasTransition] = useState(true);
-  const [slideDir, setSlideDir] = useState(0);   // -1 = going next (grid shifts left), +1 = going prev
-  const [slideTx, setSlideTx] = useState(true);  // enables CSS transition on the grid
+  const [wagonHasTransition, setWagonHasTransition] = useState(false);
+  const [patrolling, setPatrolling] = useState(false);
+  const [prevFrame, setPrevFrame] = useState(null);
   const containerRef = useRef(null);
+  const currentRef = useRef(FEATURED[0]);
+
+  // Start the initial patrol once after mount
+  useEffect(() => {
+    setPatrolling(true);
+    setWagonHasTransition(true);
+    setWagonLeft('85%');
+  }, []);
 
   useEffect(() => {
     if (paused || driving || !tweaks.autoAdvance) return;
@@ -141,38 +150,51 @@ const Hero = ({ tweaks, onOpenProject }) => {
     if (driving) return;
     setPuffKey(k => k + 1);
     setDriving(true);
+    setPatrolling(false);
 
-    // Slide grid left/right and exit wagon right
-    setSlideDir(dir);
-    setSlideTx(true);
+    // Save the outgoing slide for the exit animation, start wagon exiting right
+    setPrevFrame(currentRef.current);
     setWagonHasTransition(true);
     setWagonLeft('110%');
 
-    // At 450ms: snap grid back, update slide, snap wagon to off-screen left
+    // At 450ms: new slide snaps in (CSS animation handles the in/out visuals),
+    // clear outgoing frame, snap wagon to off-screen left
     setTimeout(() => {
-      setSlideTx(false);
-      setSlideDir(0);
       setIdx(i => (i + dir + FEATURED.length) % FEATURED.length);
       setWagonHasTransition(false);
       setWagonLeft('-20%');
     }, 450);
 
-    // At 490ms: re-enable transitions, wagon drives in from left edge
     setTimeout(() => {
-      setSlideTx(true);
+      setPrevFrame(null);
+    }, 470);
+
+    // At 510ms: wagon drives in from left edge
+    setTimeout(() => {
       setWagonHasTransition(true);
       setWagonLeft('15%');
-    }, 490);
+    }, 510);
 
+    // At 1000ms: done driving, begin patrol across tile
     setTimeout(() => {
       setDriving(false);
+      setPatrolling(true);
+      setWagonLeft('85%');
     }, 1000);
   }, [driving]);
 
   const current = FEATURED[idx];
+  currentRef.current = current;
+
   const window3 = [-1, 0, 1].map(
     (d) => FEATURED[(idx + d + FEATURED.length) % FEATURED.length]
   );
+
+  const wagonTransition = !wagonHasTransition
+    ? 'none'
+    : patrolling
+      ? `left ${Math.max(tweaks.cycleSeconds - 0.6, 1)}s linear`
+      : 'left .43s cubic-bezier(.5,.2,.4,1)';
 
   return (
     <section style={{ padding: '40px 44px 0', position: 'relative' }}>
@@ -195,7 +217,7 @@ const Hero = ({ tweaks, onOpenProject }) => {
         <SpinningWheel color={tweaks.wagonColor} size={120} />
       </div>
 
-      {/* The carousel */}
+      {/* Carousel */}
       <div style={{ position: 'relative' }}>
         <div
           className="mono"
@@ -226,7 +248,6 @@ const Hero = ({ tweaks, onOpenProject }) => {
             overflow: 'hidden',
           }}
         >
-          {/* frames row — slides left/right on transition */}
           <div
             style={{
               display: 'grid',
@@ -234,16 +255,40 @@ const Hero = ({ tweaks, onOpenProject }) => {
               gap: 24,
               padding: '0 44px',
               alignItems: 'flex-end',
-              transform: slideDir !== 0 ? `translateX(${-slideDir * 38}%)` : 'translateX(0)',
-              transition: slideTx ? 'transform 0.45s cubic-bezier(.4,0,.2,1)' : 'none',
             }}
           >
+            {/* Left dim frame */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 0 }}>
               <HeroFrame p={window3[0]} dim />
             </div>
+
+            {/* Center frame — slides animate individually */}
             <div style={{ position: 'relative', minWidth: 0 }}>
-              <HeroFrame p={window3[1]} big />
-              {/* wagon + ground overlay */}
+              {/* Clip the sliding frames without clipping the wagon below */}
+              <div style={{ position: 'relative', overflow: 'hidden' }}>
+                {/* Incoming slide */}
+                <div
+                  key={`in-${idx}`}
+                  style={{ animation: prevFrame ? 'slide-in-right .45s cubic-bezier(.4,0,.2,1) forwards' : 'none' }}
+                >
+                  <HeroFrame p={window3[1]} big />
+                </div>
+                {/* Outgoing slide */}
+                {prevFrame && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      animation: 'slide-out-left .45s cubic-bezier(.4,0,.2,1) forwards',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <HeroFrame p={prevFrame} big />
+                  </div>
+                )}
+              </div>
+
+              {/* Wagon + ground — positioned relative to center column, not clipped */}
               <div
                 style={{
                   position: 'absolute',
@@ -262,7 +307,7 @@ const Hero = ({ tweaks, onOpenProject }) => {
                     bottom: 2,
                     left: wagonLeft,
                     transform: 'translateX(-50%)',
-                    transition: wagonHasTransition ? 'left .43s cubic-bezier(.5,.2,.4,1)' : 'none',
+                    transition: wagonTransition,
                     background: 'transparent',
                     border: 0,
                     padding: 0,
@@ -273,7 +318,7 @@ const Hero = ({ tweaks, onOpenProject }) => {
                 >
                   <div style={{ position: 'relative' }}>
                     <ExhaustPuff trigger={puffKey} />
-                    <Wagon width={120} spinning={driving} color={tweaks.wagonColor} windowColor="transparent" showShadow />
+                    <Wagon width={120} spinning={driving} color={tweaks.wagonColor} showShadow />
                   </div>
                 </button>
                 <div
@@ -294,12 +339,14 @@ const Hero = ({ tweaks, onOpenProject }) => {
                 </div>
               </div>
             </div>
+
+            {/* Right dim frame */}
             <div style={{ display: 'flex', justifyContent: 'flex-start', minWidth: 0 }}>
               <HeroFrame p={window3[2]} dim />
             </div>
           </div>
 
-          {/* bottom nav row */}
+          {/* Bottom nav */}
           <div
             style={{
               display: 'flex',
@@ -340,7 +387,7 @@ const Hero = ({ tweaks, onOpenProject }) => {
         </div>
       </div>
 
-      {/* current spec line */}
+      {/* Current spec line */}
       <div
         style={{
           display: 'grid',
