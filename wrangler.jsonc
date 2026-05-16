@@ -10,5 +10,9 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "routes": [
+    { "pattern": "wagonwednesday.app", "custom_domain": true },
+    { "pattern": "www.wagonwednesday.app", "custom_domain": true }
   ]
 }
